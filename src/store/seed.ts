@@ -5,7 +5,7 @@
  */
 import type { ClothingItem } from '@/types';
 
-const base = { source: 'manual' as const, createdAt: Date.now() };
+const base = { source: 'manual' as const, createdAt: Date.now(), updatedAt: Date.now() };
 
 export const SEED_ITEMS: ClothingItem[] = [
   // Tops

@@ -13,9 +13,10 @@ import { OccasionPicker } from '@/components/OccasionPicker';
 import { OutfitCard } from '@/components/OutfitCard';
 import { WeatherBanner } from '@/components/WeatherBanner';
 import { Button, EmptyState } from '@/components/ui';
-import { isClaudeConfigured } from '@/config';
+import { isAiAvailable } from '@/services/claude';
 import { recommendOutfits, type RecommendResult } from '@/services/recommend';
 import { getCurrentWeather } from '@/services/weather';
+import { useAuth } from '@/store/auth';
 import { useCloset } from '@/store/closet';
 import { colors, font, radius, space } from '@/theme';
 import type { Occasion, Weather } from '@/types';
@@ -24,6 +25,8 @@ export default function TodayScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { items, loading: closetLoading, markWorn } = useCloset();
+  // Subscribe to auth so the AI availability note re-renders on sign in/out.
+  const { status } = useAuth();
 
   const [weather, setWeather] = useState<Weather | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
@@ -87,11 +90,13 @@ export default function TodayScreen() {
         <OccasionPicker value={occasion} onChange={setOccasion} />
       </View>
 
-      {!isClaudeConfigured() ? (
+      {!isAiAvailable() ? (
         <View style={styles.note}>
           <Ionicons name="information-circle" size={15} color={colors.textMuted} />
           <Text style={styles.noteText}>
-            Smart-match engine active. Add an Anthropic API key to enable the AI stylist.
+            {status === 'authed'
+              ? 'Smart-match engine active. Connect a backend with AI to enable the stylist.'
+              : 'Smart-match engine active. Sign in to enable the AI stylist and cloud sync.'}
           </Text>
         </View>
       ) : null}

@@ -35,42 +35,77 @@ Two problems make "what do I wear" hard:
   a deterministic on-device rules engine as a fallback, so the app always works.
 - A starter wardrobe is seeded on first launch so suggestions work immediately.
 
+## Accounts, cloud sync & the AI proxy
+
+The app works fully **offline as a guest** (local closet + on-device rules
+engine). Signing in unlocks two things, both served by the backend in
+[`server/`](./server):
+
+- **Cloud closet sync** — your wardrobe syncs across devices via a delta sync
+  with last-write-wins on `updatedAt`; deletes propagate as tombstones.
+- **AI stylist + auto-tagging** — the app calls the backend's `/ai/*` proxy; the
+  **Anthropic API key lives only on the server and never ships in the app
+  bundle.** If the server has no key, AI routes return 503 and the app falls
+  back to the rules engine.
+
+The client keeps the JWT in the device keychain (`expo-secure-store`) and routes
+all authenticated requests through `src/api/`.
+
 ## Tech stack
 
+**App**
 - **Expo (SDK 56) + React Native** — one codebase for iOS & Android (and web).
 - **expo-router** — file-based navigation (`app/`).
 - **Open-Meteo** — free, keyless weather; `expo-location` for coordinates.
-- **Anthropic Claude** — vision tagging (Haiku) + outfit styling (Sonnet).
-- **AsyncStorage** — local closet persistence.
+- **AsyncStorage** — local closet cache; **expo-secure-store** — token storage.
+
+**Backend** (`server/`)
+- **Node + Express + TypeScript**, **SQLite** (`better-sqlite3`), **JWT** auth
+  (bcrypt), **zod** validation, and a server-side **Claude** proxy
+  (Haiku for tagging, Sonnet for styling).
 
 ## Project layout
 
 ```
 app/                       # screens (expo-router)
-  _layout.tsx              # providers + navigation stack
-  (tabs)/                  # Today, Closet, Purchases
+  _layout.tsx              # Auth + Closet providers + navigation stack
+  (tabs)/                  # Today, Closet, Purchases, Account
   add-item.tsx             # photo → auto-tag → save
   item/[id].tsx            # item detail
 src/
   types.ts                 # domain model (ClothingItem, Outfit, Weather…)
   theme.ts                 # design tokens
-  config.ts                # API key / model config
-  store/                   # closet context + persistence + seed data
+  config.ts                # backend URL config
+  api/                     # client, auth, closet-sync API calls
+  store/                   # auth + closet contexts (sync, persistence, seed)
   services/
     weather.ts             # Open-Meteo + warmth heuristics
-    claude.ts              # vision tagging + stylist + purchase parsing
+    claude.ts              # AI client over the backend /ai/* proxy
     recommend.ts           # candidate filtering, scoring, AI+rules orchestration
     purchases.ts           # purchase feed + inference
   components/              # reusable UI
-  utils/                   # color mapping, etc.
+  utils/                   # color mapping, secure storage
+server/                    # backend API (see server/README.md)
 ```
 
 ## Running it
 
+**1. Backend** (optional but needed for accounts/sync/AI):
+
+```bash
+cd server
+cp .env.example .env       # set JWT_SECRET; add ANTHROPIC_API_KEY to enable AI
+npm install
+npm run dev                # http://localhost:4000
+```
+
+**2. App:**
+
 ```bash
 npm install
-npm start            # then press i / a, or scan the QR with Expo Go
-npm run web          # run in a browser
+cp .env.example .env       # set EXPO_PUBLIC_API_URL to your backend (or leave unset for offline)
+npm start                  # press i / a, or scan the QR with Expo Go
+npm run web                # run in a browser
 ```
 
 Type-check / bundle check:
@@ -80,25 +115,10 @@ npm run typecheck
 npx expo export --platform web   # validates the full module graph
 ```
 
-### Enabling the AI stylist (optional)
-
-The app runs fully without any API key using the on-device rules engine. To turn
-on Claude-powered auto-tagging and styling:
-
-```bash
-cp .env.example .env
-# add EXPO_PUBLIC_ANTHROPIC_API_KEY=sk-ant-...
-npm start
-```
-
-> **Security note:** `EXPO_PUBLIC_*` values are embedded in the client bundle.
-> That's fine for local development, but a shipped app must route Claude requests
-> through a backend proxy (`EXPO_PUBLIC_ANTHROPIC_PROXY_URL`) so the key never
-> reaches devices. The client code already supports this proxy mode.
-
 ## Roadmap
 
-- Backend proxy for Claude + user accounts and cloud closet sync.
+- ~~Backend proxy for Claude + user accounts and cloud closet sync.~~ ✅
+- Refresh tokens, rate limiting, and a managed Postgres for multi-instance deploys.
 - Real purchase ingestion (Apple/Google Pay transactions, retailer order emails).
 - Background removal on garment photos for cleaner thumbnails.
 - "Packing mode" (multi-day trips), laundry/wear tracking, and capsule analysis.

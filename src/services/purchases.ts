@@ -7,8 +7,7 @@
  * Each record is converted into closet attributes via Claude (with a keyword
  * fallback) so a tap turns a receipt line into a tagged garment.
  */
-import { inferItemFromPurchaseText } from '@/services/claude';
-import { isClaudeConfigured } from '@/config';
+import { inferItemFromPurchaseText, isAiAvailable } from '@/services/claude';
 import type { Category, InferredItem, Occasion } from '@/types';
 
 export interface PurchaseRecord {
@@ -93,7 +92,7 @@ export function parsePurchaseHeuristically(record: PurchaseRecord): InferredItem
 
 /** Convert a purchase into garment attributes (Claude first, heuristic fallback). */
 export async function inferFromPurchase(record: PurchaseRecord): Promise<InferredItem> {
-  if (isClaudeConfigured()) {
+  if (isAiAvailable()) {
     try {
       const text = [record.brand, record.title].filter(Boolean).join(' ');
       const inferred = await inferItemFromPurchaseText(text);
