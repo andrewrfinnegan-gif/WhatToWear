@@ -22,8 +22,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, ChipSelect, SectionLabel, Stepper } from '@/components/ui';
-import { isClaudeConfigured } from '@/config';
-import { tagClothingImage } from '@/services/claude';
+import { isAiAvailable, tagClothingImage } from '@/services/claude';
 import { useCloset } from '@/store/closet';
 import { colors, font, radius, space } from '@/theme';
 import type { Category, Formality, Occasion, Warmth } from '@/types';
@@ -51,7 +50,7 @@ export default function AddItemScreen() {
   const [occasions, setOccasions] = useState<Occasion[]>(['casual']);
 
   const autoTag = async (uri: string, base64?: string) => {
-    if (!isClaudeConfigured() || !base64) return;
+    if (!isAiAvailable() || !base64) return;
     setTagging(true);
     setTagError(null);
     try {
@@ -157,9 +156,9 @@ export default function AddItemScreen() {
           <Button label="Library" icon="images" variant="secondary" onPress={() => pickFrom('library')} style={styles.flex} />
         </View>
 
-        {!isClaudeConfigured() ? (
+        {!isAiAvailable() ? (
           <Text style={styles.hint}>
-            Add an Anthropic API key to auto-tag photos. For now, fill the details below.
+            Sign in with a backend configured to auto-tag photos. For now, fill the details below.
           </Text>
         ) : null}
         {tagError ? <Text style={[styles.hint, { color: colors.warning }]}>{tagError}</Text> : null}

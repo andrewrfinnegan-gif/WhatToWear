@@ -6,11 +6,10 @@
  * stylist to assemble looks. If Claude is unconfigured or errors, it falls back
  * to a deterministic on-device engine so the app always returns something.
  */
-import { suggestOutfits } from '@/services/claude';
+import { isAiAvailable, suggestOutfits } from '@/services/claude';
 import { needsOuterwear, targetWarmthForTemp } from '@/services/weather';
 import type { ClothingItem, Category, Occasion, Outfit, Weather } from '@/types';
 import { OCCASIONS } from '@/types';
-import { isClaudeConfigured } from '@/config';
 
 /** Neutrals pair with anything; this drives the simple color-harmony score. */
 const NEUTRALS = new Set([
@@ -187,7 +186,7 @@ export async function recommendOutfits(
     aiError,
   });
 
-  if (!isClaudeConfigured()) return fallback();
+  if (!isAiAvailable()) return fallback();
 
   const candidates = candidatesFor(closet, occasion, weather);
   if (candidates.length < 2) return fallback();

@@ -67,6 +67,10 @@ export interface ClothingItem {
   /** Where the item came from. "purchase" items are auto-imported. */
   source: 'manual' | 'purchase';
   createdAt: number;
+  /** Last modification time; drives last-write-wins cloud sync. */
+  updatedAt: number;
+  /** Soft-delete tombstone so deletions propagate across devices. */
+  deleted?: boolean;
   lastWornAt?: number;
   favorite?: boolean;
 }
