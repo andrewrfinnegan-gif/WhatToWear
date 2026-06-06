@@ -121,7 +121,8 @@ npx expo export --platform web   # validates the full module graph
 - ~~Backend proxy for Claude + user accounts and cloud closet sync.~~ ✅
 - Refresh tokens, rate limiting, and a managed Postgres for multi-instance deploys.
 - ~~Real purchase ingestion (retailer order emails).~~ ✅ (forward/paste, inbound webhook, Gmail)
-- More retailer-specific receipt extractors + image enrichment for purchases.
+- ~~Per-retailer receipt extractors.~~ ✅ (pluggable registry: Shopify, Amazon, Nike + generic; more to add)
+- Product-image enrichment for imported purchases.
 - Background removal on garment photos for cleaner thumbnails.
 - "Packing mode" (multi-day trips), laundry/wear tracking, and capsule analysis.
 - Learned style preferences from which outfits you actually wear.

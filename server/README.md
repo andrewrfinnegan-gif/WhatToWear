@@ -39,10 +39,26 @@ ships in the mobile bundle.
 
 Clothing purchases are detected by **parsing order-confirmation emails** (Apple/
 Google Pay don't expose line items, so email is the only source of the actual
-garments). The parser engine (`src/purchases/parser.ts`) extracts line items via
-JSON-LD (schema.org `Order`/`Product`) with a text/regex fallback, filters to
-apparel, and de-noises totals/shipping. It's covered by `src/purchases/parser.test.ts`
-(`npm test`).
+garments). Parsing runs through a **registry of pluggable extractors**
+(`src/purchases/extractors/`), tried most-specific first:
+
+| Extractor | Handles |
+|-----------|---------|
+| `shopify` | Shopify's order-email template — covers thousands of DTC clothing brands; reads name, variant (color/size), price, image |
+| `amazon`  | Amazon `/dp/` product links; relies on apparel filtering for its mixed catalog |
+| `nike`    | Brand-specific example; folds color/size into the variant |
+| `generic` | Always-on fallback: schema.org JSON-LD, then a text/regex pass |
+
+`finalizeReceipt` then applies uniform post-processing: drop noise
+(totals/shipping/tax), keep apparel (by keyword or an extractor's size-variant
+hint), de-dupe, and backfill brand/currency. The engine is covered by
+`src/purchases/parser.test.ts` and `src/purchases/extractors.test.ts` (`npm test`).
+
+**Adding a retailer:** implement the `Extractor` interface (`matches` + `extract`
+returning raw line items) in `src/purchases/extractors/`, then register it before
+`genericExtractor` in `extractors/index.ts`. The per-retailer extractors target
+known templates and may need tuning against live samples; the generic JSON-LD
+path is a robust default in the meantime.
 
 Three ingestion paths feed the same engine:
 
