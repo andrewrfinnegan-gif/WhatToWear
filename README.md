@@ -29,8 +29,9 @@ Two problems make "what do I wear" hard:
 - **Closet** — filterable grid of your wardrobe; add items via camera/library.
 - **Add item** — photo → Claude vision auto-tags every attribute (manual entry
   works too, and is the fallback when no API key is set).
-- **Purchases** — a feed of recent purchases; one tap infers attributes and
-  files the garment into your closet.
+- **Purchases** — real purchase integration: order-confirmation emails are
+  parsed into clothing line items (forward/paste, an inbound-email webhook, or a
+  connected Gmail inbox); one tap infers attributes and files the garment.
 - **Weather-aware, occasion-aware recommendation engine** — Claude stylist with
   a deterministic on-device rules engine as a fallback, so the app always works.
 - A starter wardrobe is seeded on first launch so suggestions work immediately.
@@ -119,7 +120,8 @@ npx expo export --platform web   # validates the full module graph
 
 - ~~Backend proxy for Claude + user accounts and cloud closet sync.~~ ✅
 - Refresh tokens, rate limiting, and a managed Postgres for multi-instance deploys.
-- Real purchase ingestion (Apple/Google Pay transactions, retailer order emails).
+- ~~Real purchase ingestion (retailer order emails).~~ ✅ (forward/paste, inbound webhook, Gmail)
+- More retailer-specific receipt extractors + image enrichment for purchases.
 - Background removal on garment photos for cleaner thumbnails.
 - "Packing mode" (multi-day trips), laundry/wear tracking, and capsule analysis.
 - Learned style preferences from which outfits you actually wear.

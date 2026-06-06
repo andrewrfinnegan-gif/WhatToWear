@@ -5,6 +5,10 @@ export interface AuthUser {
   id: string;
   email: string;
   displayName: string | null;
+  /** Per-user alias for the receipt-forwarding address. */
+  ingestAlias?: string | null;
+  /** Address users forward receipts to (null until the server sets INGEST_DOMAIN). */
+  ingestAddress?: string | null;
 }
 
 interface AuthResponse {

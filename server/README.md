@@ -25,6 +25,40 @@ ships in the mobile bundle.
 | POST   | `/ai/tag`       | ✅   | Vision: photo → garment attributes |
 | POST   | `/ai/outfits`   | ✅   | Stylist: candidates → outfits |
 | POST   | `/ai/purchase`  | ✅   | Purchase text → garment attributes |
+| GET    | `/purchases`    | ✅   | List detected purchases (`?status=pending`) |
+| POST   | `/purchases/parse` | ✅ | Paste/forward a receipt → parse + store |
+| POST   | `/purchases/:id/import` | ✅ | Mark a purchase imported into the closet |
+| POST   | `/purchases/:id/dismiss` | ✅ | Dismiss a purchase |
+| GET    | `/integrations/gmail/status` | ✅ | Gmail configured/connected state |
+| GET    | `/integrations/gmail/auth-url` | ✅ | Begin Gmail OAuth |
+| GET    | `/integrations/gmail/callback` | — | Gmail OAuth redirect target |
+| POST   | `/integrations/gmail/sync` | ✅ | Scan inbox → purchases |
+| POST   | `/webhooks/email` | secret | Inbound-email ingestion |
+
+## Purchase integration
+
+Clothing purchases are detected by **parsing order-confirmation emails** (Apple/
+Google Pay don't expose line items, so email is the only source of the actual
+garments). The parser engine (`src/purchases/parser.ts`) extracts line items via
+JSON-LD (schema.org `Order`/`Product`) with a text/regex fallback, filters to
+apparel, and de-noises totals/shipping. It's covered by `src/purchases/parser.test.ts`
+(`npm test`).
+
+Three ingestion paths feed the same engine:
+
+1. **Forward / paste** (`POST /purchases/parse`) — works immediately, no setup.
+2. **Inbound-email webhook** (`POST /webhooks/email`) — each user gets a unique
+   address `<alias>@INGEST_DOMAIN` (shown in the app). Point your email
+   provider's inbound parse (SendGrid Inbound Parse, Postmark, Mailgun Routes,
+   Cloudflare Email Workers) at this endpoint. Verified with `WEBHOOK_SECRET`.
+   Normalize the provider's payload to `{ to, from, subject, text, html }`.
+3. **Gmail** (env-gated by `GOOGLE_CLIENT_ID/SECRET` + `PUBLIC_BASE_URL`) —
+   OAuth read-only access; `/sync` scans recent retailer emails. Needs live
+   Google credentials; the parsing it feeds is what the tests cover.
+
+Detected purchases are stored as `pending`; the app imports them into the closet
+(inferring garment attributes via the AI proxy / heuristic) and marks them
+`imported`. Re-ingesting the same email is de-duplicated.
 
 ### Closet sync model
 
